@@ -171,17 +171,37 @@ app.post("/login", async (req, res) => {
 
 
 // OTP Verification
+// GET route for /verify-otp
+// Verify OTP route (GET)
 app.get("/verify-otp", (req, res) => {
-  if (!req.session.tempUser) return res.redirect("/login");
+  if (!req.session.tempUser) {
+    // If no tempUser, redirect to login
+    return res.redirect("/login");
+  }
+
   res.render("verifyOtp", { message: null });
 });
 
+// Verify OTP route (POST)
 app.post("/verify-otp", async (req, res) => {
   const { otp } = req.body;
-  const email = req.session.tempUser;
+  const email = req.session.tempUser; // Retrieve the tempUser from session
+
   try {
     const user = await User.findOne({ email });
+
     if (user.otp === otp && user.otpExpiry > Date.now()) {
+      if (req.session.tempUser) {
+        // It's a password reset flow
+        user.otp = null; // Clear OTP
+        user.otpExpiry = null;
+        await user.save();
+
+        req.session.tempUser = null; // Clear tempUser session after successful OTP verification
+        return res.redirect("/reset-password"); // Redirect to reset password page
+      }
+
+      // Normal login case (if not tempUser)
       req.session.user = { id: user._id, name: user.name, email: user.email };
       user.otp = null;
       user.otpExpiry = null;
@@ -191,14 +211,109 @@ app.post("/verify-otp", async (req, res) => {
         req.session.admin = true;
         return res.redirect("/admin/dashboard");
       }
+
       return res.redirect("/user-dashboard");
     }
+
     res.render("verifyOtp", { message: "Invalid or expired OTP." });
   } catch (error) {
     console.error("Error verifying OTP:", error);
     res.status(500).send("OTP verification failed.");
   }
 });
+
+// Forgot Password GET route
+// Forgot Password route (GET)
+app.get("/forgot-password", (req, res) => {
+  res.render("forgotPassword", { message: null});
+});
+
+// Forgot Password route (POST)
+// Forgot Password route (POST)
+app.post('/forgot-password', async (req, res) => {
+  try {
+      const email = req.body.email;
+
+      // Find user by email
+      const user = await User.findOne({ email });
+
+      if (!user) {
+          return res.render("forgotPassword", { message: "User not found" });
+      }
+
+      // Generate OTP and expiry time (valid for 10 minutes)
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiry = Date.now() + 10 * 60 * 1000; // OTP expires in 10 minutes
+
+      // Save OTP and expiry time to the user's record
+      user.otp = otp;
+      user.otpExpiry = otpExpiry;
+      await user.save();
+
+      // Set up email transporter
+      const transporter = nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+              user: process.env.EMAIL_USER,  // Your email
+              pass: process.env.EMAIL_PASS,  // Your email password
+          },
+      });
+
+      // Email options
+      const mailOptions = {
+          from: process.env.EMAIL_USER,
+          to: email,
+          subject: "Your OTP for Password Reset",
+          text: `Your OTP is ${otp}. It will expire in 10 minutes.`,
+      };
+
+      // Send OTP to user's email
+      await transporter.sendMail(mailOptions);
+
+      // Store email in session
+      req.session.tempUser = email;
+
+      // Redirect to OTP verification page
+      res.redirect("/verify-otp");
+
+  } catch (error) {
+      console.error("Error during forgot password process:", error);
+      // Ensure message is passed in case of an error
+      res.render("forgotPassword", { message: "Error occurred. Please try again." });
+  }
+});
+
+
+// GET route for /reset-password (display the password reset form)
+app.get("/reset-password", (req, res) => {
+  if (!req.session.tempUser) return res.redirect("/login"); // If no tempUser, redirect to login
+  res.render("resetPassword", { message: null });
+});
+
+// POST route for /reset-password (handle password reset)
+app.post("/reset-password", async (req, res) => {
+  const { newPassword } = req.body;
+  const email = req.session.tempUser; // The email stored during the forgot password flow
+  
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.redirect("/login"); // User not found, redirect to login
+
+    // Update the password
+    user.password = newPassword; // Hash this password before saving in production!
+    await user.save();
+
+    // Clear the tempUser session after password reset
+    req.session.tempUser = null;
+    
+    res.redirect("/login"); // Redirect to login after resetting password
+  } catch (error) {
+    console.error("Error resetting password:", error);
+    res.status(500).send("Error resetting password.");
+  }
+});
+
+
 
 // User Dashboard
 app.get("/user-dashboard", isAuthenticated, async (req, res) => {
@@ -215,7 +330,7 @@ app.get("/user-dashboard", isAuthenticated, async (req, res) => {
 });
 
 
-app.get("/rentals",isAuthenticated, async (req, res) => {
+app.get("/rentals", async (req, res) => {
   try {
     const rentals = await Bike.find(); // Fetch all bikes for rentals
     res.render("rentals", { rentals });
@@ -280,41 +395,7 @@ app.post("/bikes", async (req, res) => {
   }
 });
 
-
-app.get("/trips", (req,res) => {
-  if (!req.session.user) return res.redirect("/login"); // Redirect if the user is not logged in
-  res.render("trips");
-})
-
 // Route to display available bikes for rentals
-app.get('/rent/:id', async (req, res) => {
-
-  const bikeId = req.params.id;
-
-  // Validate if the bike ID is a valid ObjectId
-  if (!mongoose.Types.ObjectId.isValid(bikeId)) {
-      return res.status(400).send('Invalid bike ID');
-  }
-
-  try {
-      // Attempt to find the bike by its ID
-      const bike = await Bike.findById(bikeId);
-      if (!bike) {
-          return res.status(404).send('Bike not found');
-      }
-
-      // Generate or retrieve the rentId (make sure to define it properly)
-      const rentId = generateRentId(); // This function should generate a unique rentId
-
-      // Log the bike details for debugging
-      // Render the rent-bike page with bikeDetails and rentId
-      res.render('rent-bike', { bikeDetails: bike, rentId: rentId });
-  } catch (error) {
-      // Log the error details for debugging
-      console.error("Error while processing rent request: ", error);
-      res.status(500).send('Server error');
-  }
-});
 
 
 // Route to handle renting a bike
@@ -410,6 +491,55 @@ app.post('/rent/confirm', async (req, res) => {
       res.status(500).send("Server error");
   }
 });
+
+
+
+
+app.get('/trips', async (req, res) => {
+  try {
+    const trips = await Trip.find(); // Fetch trips from the database
+    console.log(trips); // Add this to log the trips and confirm that you're getting data
+    res.render('trips', { trips: trips }); // Pass trips to the EJS template
+  } catch (err) {
+    console.error("Error fetching trips:", err);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+
+
+
+
+
+app.post('/book-trip/:id', async (req, res) => {
+  const tripId = req.params.id;
+  const seatsToBook = parseInt(req.body.seats, 10); // Number of seats user wants to book
+
+  try {
+      const trip = await Trip.findById(tripId);
+
+      if (!trip) {
+          return res.status(404).send("Trip not found");
+      }
+
+      if (trip.numberOfSeatsLeft < seatsToBook) {
+          return res.status(400).send("Not enough seats available for booking");
+      }
+
+      // Deduct the seats
+      trip.numberOfSeatsLeft -= seatsToBook;
+
+      // Save the updated trip
+      await trip.save();
+
+      res.redirect('/trips'); // Redirect back to the trips page
+  } catch (error) {
+      console.error("Error booking trip:", error);
+      res.status(500).send("Error booking trip");
+  }
+});
+
+
 
 
 // Admin Dashboard
@@ -661,7 +791,7 @@ app.post('/admin/update-trip/:id', async (req, res) => {
 
 
 
-app.get('/admin/delete-bike/:id', async (req, res) => {
+app.post('/admin/delete-bike/:id', async (req, res) => {
   const bikeId = req.params.id;
 
   try {

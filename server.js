@@ -130,28 +130,26 @@ app.get("/login", (req, res) => {
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      // If the user does not exist, pass the error message
       return res.render("login", { message: "User not found. Please register first." });
     }
 
-    // Check if password matches the hashed password stored in the database
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      // If the password is incorrect, pass the error message
       return res.render("login", { message: "Incorrect password. Please try again." });
     }
 
-    // If credentials are correct, proceed to send OTP and login process
+    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiry = Date.now() + 10 * 60 * 1000;
-
+    const otpExpiry = Date.now() + 10 * 60 * 1000; // OTP valid for 10 minutes
     user.otp = otp;
     user.otpExpiry = otpExpiry;
     await user.save();
 
+    // Send OTP to email
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -160,14 +158,18 @@ app.post("/login", async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
+
+    // Store email and flow type in session
     req.session.tempUser = email;
-    req.session.isAdminLogin = user.isAdmin;
-    res.redirect("/verify-otp");
+    req.session.isLoginOtp = true; // Distinguish this from password reset flow
+
+    return res.redirect("/verify-otp");
   } catch (error) {
     console.error("Error during login:", error);
     res.render("login", { message: "Login failed. Try again." });
   }
 });
+
 
 
 // OTP Verification
@@ -185,42 +187,39 @@ app.get("/verify-otp", (req, res) => {
 // Verify OTP route (POST)
 app.post("/verify-otp", async (req, res) => {
   const { otp } = req.body;
-  const email = req.session.tempUser; // Retrieve the tempUser from session
+  const email = req.session.tempUser;
 
   try {
     const user = await User.findOne({ email });
 
-    if (user.otp === otp && user.otpExpiry > Date.now()) {
-      if (req.session.tempUser) {
-        // It's a password reset flow
-        user.otp = null; // Clear OTP
-        user.otpExpiry = null;
-        await user.save();
-
-        req.session.tempUser = null; // Clear tempUser session after successful OTP verification
-        return res.redirect("/reset-password"); // Redirect to reset password page
-      }
-
-      // Normal login case (if not tempUser)
-      req.session.user = { id: user._id, name: user.name, email: user.email };
-      user.otp = null;
-      user.otpExpiry = null;
-      await user.save();
-
-      if (user.isAdmin) {
-        req.session.admin = true;
-        return res.redirect("/admin/dashboard");
-      }
-
-      return res.redirect("/user-dashboard");
+    if (!user || user.otp !== otp || Date.now() > user.otpExpiry) {
+      return res.render("verifyOtp", { message: "Invalid or expired OTP. Please try again." });
     }
 
-    res.render("verifyOtp", { message: "Invalid or expired OTP." });
+    // Clear OTP and expiry
+    user.otp = null;
+    user.otpExpiry = null;
+    await user.save();
+
+    if (req.session.isLoginOtp) {
+      // Handle login flow
+      req.session.user = { id: user._id, email: user.email };
+      req.session.isAdmin = user.isAdmin; // Admin check
+
+      req.session.tempUser = null;
+      req.session.isLoginOtp = null;
+
+      return user.isAdmin ? res.redirect("/admin/dashboard") : res.redirect("/user-dashboard");
+    } else {
+      // Handle password reset flow
+      return res.redirect("/reset-password");
+    }
   } catch (error) {
     console.error("Error verifying OTP:", error);
-    res.status(500).send("OTP verification failed.");
+    res.render("verifyOtp", { message: "An error occurred. Please try again." });
   }
 });
+
 
 // Forgot Password GET route
 // Forgot Password route (GET)
@@ -287,29 +286,31 @@ app.post('/forgot-password', async (req, res) => {
 // GET route for /reset-password (display the password reset form)
 app.get("/reset-password", (req, res) => {
   if (!req.session.tempUser) return res.redirect("/login"); // If no tempUser, redirect to login
-  res.render("resetPassword", { message: null });
+  res.render("resetPassword", { email: req.session.tempUser, message: null });
 });
 
 // POST route for /reset-password (handle password reset)
 app.post("/reset-password", async (req, res) => {
   const { newPassword } = req.body;
-  const email = req.session.tempUser; // The email stored during the forgot password flow
-  
+  const email = req.session.tempUser;
+
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.redirect("/login"); // User not found, redirect to login
+    if (!user) {
+      return res.render("resetPassword", { message: "User not found.", email });
+    }
 
-    // Update the password
-    user.password = newPassword; // Hash this password before saving in production!
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
     await user.save();
 
-    // Clear the tempUser session after password reset
     req.session.tempUser = null;
-    
-    res.redirect("/login"); // Redirect to login after resetting password
+
+    res.redirect("/login");
   } catch (error) {
     console.error("Error resetting password:", error);
-    res.status(500).send("Error resetting password.");
+    res.render("resetPassword", {email, message: "Error resetting password. Please try again." });
   }
 });
 

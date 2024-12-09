@@ -9,10 +9,12 @@ const nodemailer = require("nodemailer");
 const multer = require("multer");
 const { v4: uuidv4 } = require('uuid');
 const axios = require("axios");
+const QRCode = require('qrcode');
 require("dotenv").config();
 
 const Bike = require("./models/Bike");
 const Trip = require('./models/Trip'); // Import the Trip model
+
 // Initialize Express App
 const app = express();
 
@@ -53,6 +55,7 @@ app.use(
     secret: "mysecretkey",
     resave: false,
     saveUninitialized: false,
+    cookie: { maxAge: 1000*60*60*24 }, // 24 hours
   })
 );
 
@@ -170,7 +173,7 @@ app.post("/login", async (req, res) => {
   }
 });
 
-
+  //­­­­­­­­­­­­­­­­­­­
 
 // OTP Verification
 // GET route for /verify-otp
@@ -459,7 +462,7 @@ app.post('/rent/confirm', async (req, res) => {
           service: 'gmail',
           auth: {
               user: 'sarthakjm2284@gmail.com', // Your email
-              pass: "xngu agtf hsfh evmb"    // Your email password or app password
+              pass: "niuf ddih nacq qqby"    // Your email password or app password
           }
       });
 
@@ -486,7 +489,7 @@ app.post('/rent/confirm', async (req, res) => {
 
       await transporter.sendMail(mailOptions);
 
-      res.send('Booking confirmed! A confirmation email has been sent.');
+      res.render('confirm');
   } catch (error) {
       console.error(error);
       res.status(500).send("Server error");
@@ -494,6 +497,54 @@ app.post('/rent/confirm', async (req, res) => {
 });
 
 
+// About Route
+app.get('/about', (req, res) => {
+  res.render('about', {
+    companyName: 'Royal Bike Club',
+    intentions: [
+      {
+        title: 'Selling Bikes',
+        description: 'At Royal Bike Club, we offer a wide range of premium bikes that cater to all types of riders—from daily commuters to adventure seekers. Our bikes are built to provide comfort, efficiency, and durability. We ensure every bike meets the highest quality standards before it reaches you.'
+      },
+      {
+        title: 'Renting Bikes',
+        description: 'Need a bike for a short period? We’ve got you covered! Our rental services provide affordable and convenient options for those looking to explore their city or plan a weekend getaway. Choose from a variety of bikes to suit your specific needs and enjoy a hassle-free rental experience.'
+      },
+      {
+        title: 'Booking Trips',
+        description: 'Embark on unforgettable journeys with our meticulously planned road trips. Whether you’re seeking adventure, scenic views, or simply a chance to connect with nature, our trips are designed to offer a safe and exhilarating experience. Join a community of passionate bikers and make memories that last a lifetime.'
+      }
+    ]
+  });
+});
+
+
+
+// Team Route
+app.get('/team', (req, res) => {
+  res.render('team', {
+    teamMembers: [
+      {
+        name: 'Sarthak Jyoti Mishra',
+        role: 'Founder & CEO',
+        bio: 'A visionary leader passionate about bikes and adventure. Vivaan founded Royal Bike Club to create a community for biking enthusiasts.',
+        image: '/images/sarthak.jpg' // Replace with the actual path to the image
+      },
+      {
+        name: 'Samarth Sehdev',
+        role: 'Marketing Head',
+        bio: 'Samarth is a marketing genius, ensuring that Royal Bike Club reaches every biking enthusiast out there.',
+        image: '/images/smaarth.jpg' // Replace with the actual path to the image
+      },
+      {
+        name: 'Saumya Mehta',
+        role: 'Operations Manager',
+        bio: 'Saumya oversees all operations, ensuring a seamless experience for customers, whether they’re buying, renting, or booking trips.',
+        image: '/images/saumya.jpg' // Replace with the actual path to the image
+      }
+    ]
+  });
+});
 
 
 app.get('/trips', async (req, res) => {
@@ -527,13 +578,27 @@ app.post('/book-trip/:id', async (req, res) => {
           return res.status(400).send("Not enough seats available for booking");
       }
 
-      // Deduct the seats
-      trip.numberOfSeatsLeft -= seatsToBook;
+      // Calculate total price
+      const totalPrice = seatsToBook * trip.price;
 
-      // Save the updated trip
+      // Generate UPI Payment URL
+      const upiID = "9464527197@ptyes"; // Replace with your UPI ID
+      const upiURI = `upi://pay?pa=${upiID}&pn=Royal%20Bike%20Club&am=${totalPrice}&cu=INR`;
+
+      // Generate QR Code
+      const qrCodeData = await QRCode.toDataURL(upiURI);
+
+      // Render the QR code page
+      res.render('qr-code', {
+          tripTitle: trip.title,
+          totalPrice,
+          qrCodeData,
+      });
+
+      // Deduct the seats and save the trip (optional: save after payment confirmation)
+      trip.numberOfSeatsLeft -= seatsToBook;
       await trip.save();
 
-      res.redirect('/trips'); // Redirect back to the trips page
   } catch (error) {
       console.error("Error booking trip:", error);
       res.status(500).send("Error booking trip");
@@ -541,7 +606,28 @@ app.post('/book-trip/:id', async (req, res) => {
 });
 
 
+app.post('/confirm-payment', (req, res) => {
+  // Handle the payment confirmation logic here
+  const paymentData = req.body; // Access posted data
+  console.log('Payment Data:', paymentData);
 
+  // Respond to the client
+  res.render('confirm');
+});
+app.post('/confirm-payment/:id', async (req, res) => {
+  const { id } = req.params;
+
+  // Update trip details (reduce seats, mark as booked, etc.)
+  const trip = await Trip.findById(id);
+  if (!trip) {
+      return res.status(404).send('Trip not found');
+  }
+
+  trip.numberOfSeatsLeft -= req.body.seats;
+  await trip.save();
+
+  res.send('Payment confirmed! Your trip is booked.');
+});
 
 // Admin Dashboard
 app.get('/admin/dashboard', async (req, res) => {
@@ -557,7 +643,7 @@ app.get('/admin/dashboard', async (req, res) => {
 
 // Add Bike Form
 app.get("/admin/add-bike-form", (req, res) => {
-  if (!req.session.admin) return res.redirect("/login");
+  // if (!req.session.admin) return res.redirect("/login");
   res.render("addBikeForm");
 });
 
@@ -664,7 +750,7 @@ app.post('/admin/update-bike/:id', async (req, res) => {
 
 
 app.get('/admin/add-trip', (req, res) => {
-  if (!req.session.admin) return res.redirect("/login");  // Ensure admin login
+  // if (!req.session.admin) return res.redirect("/login");  // Ensure admin login
   res.render("addTripForm", { message: null });  // Render form with no initial error message
 });
 app.post('/admin/add-trip', async (req, res) => {
@@ -716,7 +802,7 @@ app.get('/admin/view-bike/:id', async (req, res) => {
 
 
 app.get('/admin/view-trips', async (req, res) => {
-  if (!req.session.admin) return res.redirect("/login");  // Ensure only admins can view trips
+  // if (!req.session.admin) return res.redirect("/login");  // Ensure only admins can view trips
 
   try {
     const trips = await Trip.find();  // Fetch all trips from the database
@@ -858,6 +944,45 @@ app.get('/admin/view-bikes', async (req, res) => {
     res.status(500).send("Error fetching bikes");
   }
 });
+
+
+app.get('/user-details', isAuthenticated,(req, res) => {
+  // Inside the POST /verify-otp route
+
+console.log("Session after login:", req.session); // Check session right after login
+
+  console.log("Sessin Info: ", req.session)
+  const userId = req.user ? req.user._id : null; // Assuming authentication is done
+  
+  if (!userId) {
+    return res.status(401).json({ message: 'You must be logged in to view this information' });
+  }
+
+  Order.find({ user: userId, status: 'Completed' })
+    .populate('bike')
+    .then(orders => {
+      const rentedBikes = orders.map(order => order.bike);
+      
+      Trip.find({ 'users.user': userId })
+        .then(trips => {
+          Order.find({ user: userId, status: 'Completed' })
+            .populate('bike')
+            .then(boughtBikesOrders => {
+              const boughtBikes = boughtBikesOrders.filter(order => order.status === 'Completed').map(order => order.bike);
+              
+              res.render('user-details', {
+                rentedBikes,
+                bookedTrips: trips,
+                boughtBikes
+              });
+            })
+            .catch(err => res.status(500).json({ error: err.message }));
+        })
+        .catch(err => res.status(500).json({ error: err.message }));
+    })
+    .catch(err => res.status(500).json({ error: err.message }));
+});
+
 
 
 // Logout

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment QR Code</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        img {
+            margin: 20px 0;
+            width: 300px;
+            height: 300px;
+        }
+        .details {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pay for Your Trip</h1>
+    <div class="container">
+        <p class="details"><strong>Trip:</strong> <%= tripTitle %></p>
+        <p class="details"><strong>Total Price:</strong> ₹<%= totalPrice %></p>
+        <p>Scan the QR code below to make the payment:</p>
+        <img src="<%= qrCodeData %>" alt="UPI QR Code">
+        <p>After making the payment, click below:</p>
+        <form action="/confirm-payment" method="POST">
+            <button type="submit">Confirm Payment</button>
+        </form>
+    </div>
+</body>
+</html>

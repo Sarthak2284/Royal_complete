@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Details</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #212121;">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/">Royal Bike Club</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="container py-5">
+    <h2 class="text-center mb-4">Your Details</h2>
+    
+    <!-- Rented Bikes Section -->
+    <h3>Bikes Rented</h3>
+    <% if (rentedBikes.length > 0) { %>
+      <ul class="list-group mb-4">
+        <% rentedBikes.forEach(function(bike) { %>
+          <li class="list-group-item">
+            <strong><%= bike.name %></strong> - <%= new Date(bike.rentDate).toLocaleDateString() %> (Rental Period: <%= bike.rentalPeriod %> days)
+          </li>
+        <% }); %>
+      </ul>
+    <% } else { %>
+      <p>You have not rented any bikes yet.</p>
+    <% } %>
+
+    <!-- Purchased Bikes Section -->
+    <h3>Bikes Purchased</h3>
+    <% if (purchasedBikes.length > 0) { %>
+      <ul class="list-group mb-4">
+        <% purchasedBikes.forEach(function(bike) { %>
+          <li class="list-group-item">
+            <strong><%= bike.name %></strong> - Purchased on <%= new Date(bike.purchaseDate).toLocaleDateString() %>
+          </li>
+        <% }); %>
+      </ul>
+    <% } else { %>
+      <p>You have not purchased any bikes yet.</p>
+    <% } %>
+
+    <!-- Trips Section -->
+    <h3>Your Trips</h3>
+    <% if (trips.length > 0) { %>
+      <ul class="list-group mb-4">
+        <% trips.forEach(function(trip) { %>
+          <li class="list-group-item">
+            <strong><%= trip.destination %></strong> - <%= new Date(trip.date).toLocaleDateString() %>
+          </li>
+        <% }); %>
+      </ul>
+    <% } else { %>
+      <p>You have not booked any trips yet.</p>
+    <% } %>
+
+    <!-- Transaction Details Section -->
+    <h3>Transaction History</h3>
+    <% if (rentedBikes.concat(purchasedBikes).length > 0) { %>
+      <ul class="list-group">
+        <% rentedBikes.concat(purchasedBikes).forEach(function(item) { %>
+          <li class="list-group-item">
+            <strong><%= item.name %></strong> - <%= new Date(item.transactionDate).toLocaleDateString() %> - $<%= item.amount %>
+          </li>
+        <% }); %>
+      </ul>
+    <% } else { %>
+      <p>No transactions found.</p>
+    <% } %>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer text-center" style="background-color: #212121; color: #fff; padding: 2rem 0;">
+    <p>&copy; 2024 Royal Bike Club. All rights reserved.</p>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -169,56 +169,68 @@
 <body>
 
   <!-- Navigation Bar -->
-  <nav class="navbar navbar-expand-lg navbar-dark">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <div class="container-fluid">
-      <!-- Logo/BrandName Left Side -->
+      <!-- Logo/BrandName -->
       <a class="navbar-brand" href="/">Royal Bike Club</a>
-
-      <!-- Search Bar -->
-      <form class="d-flex ms-3" role="search">
-        <input class="form-control me-2" type="search" placeholder="Search bikes" aria-label="Search">
-        <button class="btn btn-outline-success" type="submit">Search</button>
-      </form>
-
-      <!-- Cart Button -->
-      <button class="btn btn-outline-primary ms-3">
-        <i class="bi bi-cart"></i> Cart
-      </button>
-
+  
       <!-- Toggler for small screens -->
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <button 
+        class="navbar-toggler" 
+        type="button" 
+        data-bs-toggle="collapse" 
+        data-bs-target="#navbarNav" 
+        aria-controls="navbarNav" 
+        aria-expanded="false" 
+        aria-label="Toggle navigation"
+      >
         <span class="navbar-toggler-icon"></span>
       </button>
-
+  
+      <!-- Navbar Links -->
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ms-auto">
-          <!-- Check if user is logged in -->
+          <!-- Home Link -->
+          <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+          </li>
+          <!-- About Link -->
+          <li class="nav-item">
+            <a class="nav-link" href="/about">About</a>
+          </li>
+          <!-- Our Team Link -->
+          <li class="nav-item">
+            <a class="nav-link" href="/team">Our Team</a>
+          </li>
+          
           <% if (user) { %>
-            <!-- Display Hello user and Logout -->
+            <!-- If user is logged in -->
             <li class="nav-item">
               <a class="nav-link" href="#">Hello, <%= user.name %></a>
+            </li>
+            <li class="nav-item">
               <a class="nav-link" href="/logout">Logout</a>
             </li>
             <% if (user.role === 'admin') { %>
-              <!-- If admin, show admin dashboard link -->
+              <!-- Admin Dashboard Link -->
               <li class="nav-item">
                 <a class="nav-link" href="/admin-dashboard">Admin Dashboard</a>
               </li>
             <% } %>
           <% } else { %>
-            <!-- If not logged in, show Login and Register links -->
+            <!-- If not logged in, show Login and Signup links -->
             <li class="nav-item">
               <a class="nav-link" href="/login">Login</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="/register">Register</a>
+              <a class="nav-link" href="/register">Signup</a>
             </li>
           <% } %>
         </ul>
       </div>
     </div>
   </nav>
-
+  
   <!-- Hero Section -->
   <div class="hero">
     <div>
@@ -229,47 +241,43 @@
   </div>
 
   <!-- Our Services Section -->
-  <div class="container py-5">
-    <h2 class="text-center mb-4">Our Services</h2>
-    <div class="row row-cols-1 row-cols-md-3 g-4">
-      <div class="col">
-        <div class="card services-card h-100">
-          <img src="https://plus.unsplash.com/premium_photo-1687952845709-67cff21e466b?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="card-img-top" alt="Bike Rentals">
-          <div class="card-body">
-            <h5 class="card-title">Bike Rentals</h5>
-            <p class="card-text">Rent a bike and explore the world around you. Affordable rates, available for all kinds of bikes.</p>
-          </div>
-          <div class="card-footer text-center">
-            <button class="btn btn-info" onclick="window.location.href='/rentals'">Explore Rentals</button>
-          </div>
+<!-- Our Services Section -->
+<div class="container py-5">
+  <h2 class="text-center mb-4">Our Services</h2>
+  <div class="row row-cols-1 row-cols-md-2 g-4 justify-content-center">
+    <!-- Bike Rentals Card -->
+    <div class="col">
+      <div class="card services-card h-100">
+        <img src="https://plus.unsplash.com/premium_photo-1687952845709-67cff21e466b?q=80&w=1887&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+          class="card-img-top" alt="Bike Rentals">
+        <div class="card-body text-center">
+          <h5 class="card-title">Bike Rentals</h5>
+          <p class="card-text">Rent a bike and explore the world around you. Affordable rates, available for all kinds of bikes.</p>
+        </div>
+        <div class="card-footer text-center">
+          <button class="btn btn-info" onclick="window.location.href='/rentals'">Explore Rentals</button>
         </div>
       </div>
-      <div class="col">
-        <div class="card services-card h-10">
-          <img src="https://images.unsplash.com/photo-1638003299152-dd1e3bf81fa5?q=80&w=1964&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="card-img-top" alt="Bike Sales">
-          <div class="card-body">
-            <h5 class="card-title">Bike Sales</h5>
-            <p class="card-text">Buy the best bikes from top brands. We offer a wide range of bikes suited to your needs.</p>
-          </div>
-          <div class="card-footer text-center">
-            <button class="btn btn-info" onclick="window.location.href='/bikes'">View Bikes</button>
-          </div>
+    </div>
+
+    <!-- Road Trips Card -->
+    <div class="col">
+      <div class="card services-card h-100">
+        <img src="https://images.unsplash.com/photo-1558980664-2cd663cf8dde?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" 
+          class="card-img-top" alt="Road Trips">
+        <div class="card-body text-center">
+          <h5 class="card-title">Road Trips</h5>
+          <p class="card-text">Join us for amazing road trips. Choose your destination and let us handle the rest.</p>
         </div>
-      </div>
-      <div class="col">
-        <div class="card services-card h-10">
-          <img src="https://images.unsplash.com/photo-1558980664-2cd663cf8dde?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="card-img-top" alt="Road Trips">
-          <div class="card-body">
-            <h5 class="card-title">Road Trips</h5>
-            <p class="card-text">Join us for amazing road trips. Choose your destination and let us handle the rest.</p>
-          </div>
-          <div class="card-footer text-center">
-            <button class="btn btn-info" onclick="window.location.href='/trips'">Book a Trip</button>
-          </div>
+        <div class="card-footer text-center">
+          <button class="btn btn-info" onclick="window.location.href='/trips'">Book a Trip</button>
         </div>
       </div>
     </div>
   </div>
+</div>
+
+
 
   <!-- Customer Reviews Section -->
   <div class="container py-5">

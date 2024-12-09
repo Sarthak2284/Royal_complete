@@ -24,12 +24,19 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     }
 
+    .dashboard {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 2rem auto;
+      padding: 1rem;
+      max-width: 1200px;
+    }
+
     .container {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      margin: 2rem auto;
-      max-width: 1200px;
       gap: 1.5rem;
     }
 
@@ -80,7 +87,7 @@
     }
 
     .logout {
-      margin: 2rem;
+      margin-top: 2rem;
       text-align: center;
     }
 
@@ -106,59 +113,40 @@
     <h1>Welcome to the Admin Dashboard</h1>
   </div>
 
-  <div class="container">
-    <!-- Add a Bike Card -->
-    <div class="card">
-      <h2>Add a Bike</h2>
-      <p>Add new bikes to your inventory for sale or rental.</p>
-      <button onclick="window.location.href='/admin/add-bike-form'">Go</button>
+  <div class="dashboard">
+    <div class="container">
+      <!-- Add a Bike Card -->
+      <div class="card">
+        <h2>Add a Bike</h2>
+        <p>Add new bikes to your inventory for sale or rental.</p>
+        <button onclick="window.location.href='/admin/add-bike-form'">Go</button>
+      </div>
+
+      <!-- Add Trip Details Card -->
+      <div class="card">
+        <h2>Add Trip Details</h2>
+        <p>Add trips and enjoy your tour.</p>
+        <button onclick="window.location.href='/admin/add-trip'">Go</button>
+      </div>
+
+      <!-- View Bikes Card -->
+      <div class="card">
+        <h2>View Bikes</h2>
+        <p>View all bikes currently in your inventory.</p>
+        <button onclick="window.location.href='/admin/view-bikes'">Go</button>
+      </div>
+
+      <!-- View Trips Card -->
+      <div class="card">
+        <h2>View Trips</h2>
+        <p>View all trips and their details.</p>
+        <button onclick="window.location.href='/admin/view-trips'">Go</button>
+      </div>
     </div>
 
-    <!-- Add Trip Details Card -->
-    <div class="card">
-      <h2>Add Trip Details</h2>
-      <p>Add trips and enjoy your tour.</p>
-      <button onclick="window.location.href='/admin/add-trip'">Go</button>
+    <div class="logout">
+      <a href="/logout">Logout</a>
     </div>
-
-    <!-- View Bikes Card -->
-    <div class="card">
-      <h2>View Bikes</h2>
-      <p>View all bikes currently in your inventory.</p>
-      <button onclick="window.location.href='/admin/view-bikes'">Go</button>
-    </div>
-
-    <!-- View Trips Card -->
-    <div class="card">
-      <h2>View Trips</h2>
-      <p>View all trips and their details.</p>
-      <button onclick="window.location.href='/admin/view-trips'">Go</button>
-    </div>
-
-    <!-- Calculate Profit Card -->
-    <div class="card">
-      <h2>Calculate Profit</h2>
-      <p>Analyze your profit and earnings.</p>
-      <button onclick="window.location.href='/admin/calculate-profit'">Go</button>
-    </div>
-
-    <!-- User Queries Card -->
-    <div class="card">
-      <h2>User Queries</h2>
-      <p>View and respond to queries submitted by users.</p>
-      <button onclick="window.location.href='/admin/user-queries'">Go</button>
-    </div>
-
-    <!-- User Feedback Card -->
-    <div class="card">
-      <h2>User Feedback</h2>
-      <p>Read feedback from your customers to improve services.</p>
-      <button onclick="window.location.href='/admin/user-feedback'">Go</button>
-    </div>
-  </div>
-
-  <div class="logout">
-    <a href="/logout">Logout</a>
   </div>
 
 </body>

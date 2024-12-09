@@ -125,7 +125,32 @@ footer {
     bottom: 0;
 }
 
+#upi-qr-code {
+        display: none;
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    #upi-qr-code img {
+        width: 500px;
+        height: 500px;
+    }
+
 </style>
+
+<script>
+    // Function to handle UPI selection and display QR code
+    function handlePaymentMethodChange() {
+        var paymentMethod = document.getElementById("paymentMethod").value;
+        var qrCodeDiv = document.getElementById("upi-qr-code");
+
+        if (paymentMethod === "UPI") {
+            qrCodeDiv.style.display = "block"; // Show QR code
+        } else {
+            qrCodeDiv.style.display = "none"; // Hide QR code for other methods
+        }
+    }
+</script>
 <body>
     <header>
         <nav>
@@ -153,11 +178,19 @@ footer {
                 <label for="rentalDays">Days to Rent:</label>
                 <input type="number" id="rentalDays" name="rentalDays" min="1" required>
 
-                <label for="paymentMethod">Payment Method:</label>
-                <select name="paymentMethod" id="paymentMethod" required>
+                 <label for="paymentMethod">Payment Method:</label>
+                <select name="paymentMethod" id="paymentMethod" onchange="handlePaymentMethodChange()" required>
+                    <option value="select">Select</option>
                     <option value="UPI">UPI</option>
                     <option value="Cash">Cash</option>
                 </select>
+
+                <!-- UPI QR Code Section -->
+                <div id="upi-qr-code">
+                    <p>Scan the QR code to complete payment:</p>
+                    <!-- Replace the link below with your actual UPI QR code image path -->
+                    <img src="/images/qr.jpg" alt="UPI QR Code">
+                </div>
 
                 <button type="submit">Confirm Booking</button>
             </form>
